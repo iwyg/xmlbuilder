@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This File is part of the Thapp\XsltBridge package
+ * This File is part of the Thapp\XmlBuilder package
  *
  * (c) Thomas Appel <mail@thomas-appel.com>
  *
@@ -15,8 +15,8 @@ namespace Thapp\XmlBuilder;
  * Class: NormalizerInterface
  *
  *
- * @package
- * @version
+ * @package Thapp\XmlBuilder
+ * @version $Id$
  * @author Thomas Appel <mail@thomas-appel.com>
  * @license MIT
  */

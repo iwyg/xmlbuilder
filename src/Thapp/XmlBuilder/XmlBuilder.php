@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This File is part of the Thapp\XsltBridge package
+ * This File is part of the Thapp\XmlBuilder package
  *
  * (c) Thomas Appel <mail@thomas-appel.com>
  *
@@ -19,8 +19,8 @@ use \DOMDocument;
  * Class: XMLBuilder
  *
  *
- * @package
- * @version
+ * @package Thapp\XmlBuilder
+ * @version $Id$
  * @author Thomas Appel <mail@thomas-appel.com>
  * @license MIT
  */
@@ -76,14 +76,43 @@ class XMLBuilder
     protected $encoding = 'UTF-8';
 
     /**
-     * __construct
+     * Create new XmlBuilder.
+     * @param string $name root element name
+     * @param NormalizerInterface $normalizer
      *
-     * @param array $configuration
      * @access public
      */
-    public function __construct($name = 'data', NormalizerInterface $normalizer)
+    public function __construct($name = null, NormalizerInterface $normalizer = null)
     {
-        $this->rootName   = $name;
+        $this->setRootname($name);
+        $this->setNormalizer($normalizer);
+    }
+
+    /**
+     * setName
+     *
+     * @param mixed $name
+     * @access public
+     * @return void
+     */
+    public function setName($name = null)
+    {
+        $this->rootNa = is_null($name) ? 'data' : $name;
+    }
+
+    /**
+     * setNormalizer
+     *
+     * @param NormalizerInterface $normalizer
+     * @access public
+     * @return void
+     */
+    public function setNormalizer(NormalizerInterface $normalizer = null)
+    {
+        if (is_null($normalizer)) {
+            $normalizer = new Normalizer;
+        }
+
         $this->normalizer = $normalizer;
     }
 
@@ -106,9 +135,9 @@ class XMLBuilder
      * @access public
      * @return void
      */
-    public function setRootname($name)
+    public function setRootname($name = null)
     {
-        $this->rootName = $name;
+        $this->rootName = is_null($name) ? 'data' : $name;
     }
 
     /**
@@ -133,6 +162,17 @@ class XMLBuilder
     public function load($data)
     {
         $this->data = $data;
+    }
+
+    /**
+     * getNormalizer
+     *
+     * @access public
+     * @return Thapp\XmlBuilder\NormalizerInterface
+     */
+    public function getNormalizer()
+    {
+        return !is_null($this->normalizer) ? $this->normalizer : new Normalizer;
     }
 
     /**
@@ -177,7 +217,7 @@ class XMLBuilder
      */
     protected function normalize($name)
     {
-        return $this->normalizer->normalize($name);
+        return $this->getNormalizer()->normalize($name);
     }
 
     /**
@@ -190,7 +230,7 @@ class XMLBuilder
      */
     protected function buildXML(DOMNode &$DOMNode, $data, $ignoreObjects = false)
     {
-        $data = $this->normalizer->ensureArray($data);
+        $data = $this->getNormalizer()->ensureArray($data);
 
         if (is_null($data)) {
             return;
@@ -203,7 +243,7 @@ class XMLBuilder
 
             if (!is_scalar($value)) {
 
-                if (!$value = $this->normalizer->ensureArray($value, $ignoreObjects)) {
+                if (!$value = $this->getNormalizer()->ensureArray($value, $ignoreObjects)) {
                     continue;
                 }
             }
@@ -269,18 +309,6 @@ class XMLBuilder
             return true;
         }
         return false;
-    }
-
-    /**
-     * isEloquent
-     *
-     * @param mixed $data
-     * @access protected
-     * @return boolean
-     */
-    protected function isEloquent($data)
-    {
-        return $data instanceof Model || $data instanceof Collection;
     }
 
     /**

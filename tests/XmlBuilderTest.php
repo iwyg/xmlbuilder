@@ -53,6 +53,29 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    public function testConstructWithoutNormalizer()
+    {
+        try {
+
+            $builder = new XmlBuilder;
+
+        } catch (\Exception $e) {
+            $this->fail();
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function testGetNormalizerShouldReturnInstanceOfNormalizerInterface()
+    {
+        $builder = new XmlBuilder;
+        $this->assertInstanceof('Thapp\XmlBuilder\NormalizerInterface', $builder->getNormalizer());
+    }
+
+    /**
+     * @test
+     */
     public function testBuildXML()
     {
         $str  = '<data><foo>bar</foo></data>';
