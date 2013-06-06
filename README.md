@@ -44,6 +44,32 @@ prints:
 
 ```
 
+XmlBuilder by defaul will create attributes on a dom node by itself as long as your key name statrts with '@', 
+however `@attributes` expects an array of key value pairs wereas a key like `@key` would accept only scalar values (string, int, float, or boolean). 
+
+### Map keys to become attributes
+
+```php
+
+$data = array('foo' => 'bar', 'bar' => 'baz');
+
+$xmlBuilder = new XmlBuilder('response');
+$XmlBuilder->load($data);
+
+
+$XmlBuilder->setAttributeMapp(array('response' => array('foo')));
+echo $XmlBuilder->createXML();
+```
+
+Prints: 
+
+```xml
+<response foo="bar">
+  <bar>baz</bar>
+</response>
+```
+
+
 ### Create xml from an Object
 
 ```php
@@ -124,28 +150,6 @@ prints:
   </entries>
 </data>
 ```
-
-### Map keys to become attributes
-
-```php
-
-$data = array('foo' => 'bar', 'bar' => 'baz');
-
-$XmlBuilder->load($data);
-
-
-$XmlBuilder->setAttributeMapp(array('data' => array('foo')));
-echo $XmlBuilder->createXML();
-```
-
-Prints: 
-
-```xml
-<data foo="bar">
-  <bar>baz</bar>
-</data>
-```
-
 
 
 
