@@ -13,6 +13,7 @@
         "php":">=5.3.7"
     },
     "autoload": {
-        "psr-0": {"Thapp": "src/"}
+        "psr-0": {"Thapp": "src/"},
+        "files": ["src/Thapp/Xmlbuilder/helper.php"]
     }
 }
