@@ -18,6 +18,6 @@
     "autoload": {
         "psr-0": {"Thapp": "src/"},
         "classmap":["tests/"],
-        "files": ["src/Thapp/XmlBuilder/helper.php"]
+        "files": ["src/includes/helper.php"]
     }
 }

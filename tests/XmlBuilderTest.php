@@ -139,6 +139,21 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    public function testCreateCdataSection()
+    {
+        $data = array(
+            'text' => '<!-- this should be wrapped in cdata -->'
+        );
+
+        $expected = '<data><text><![CDATA[<!-- this should be wrapped in cdata -->]]></text></data>';
+
+        $this->builder->load($data);
+        $this->assertXmlStringEqualsXmlString($expected, $this->builder->createXML($data));
+    }
+
+    /**
+     * @test
+     */
     public function testBuildXMLCreateArrayAndSingularizeNodeNames()
     {
         $str  = '<data><entry>a</entry><entry>b</entry><entry>c</entry></data>';

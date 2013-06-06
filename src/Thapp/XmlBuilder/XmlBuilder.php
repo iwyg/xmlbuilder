@@ -209,18 +209,6 @@ class XMLBuilder
     }
 
     /**
-     * normalize
-     *
-     * @param mixed $name
-     * @access protected
-     * @return string
-     */
-    protected function normalize($name)
-    {
-        return $this->getNormalizer()->normalize($name);
-    }
-
-    /**
      * buildXML
      *
      * @param DOMNode $DOMNode
@@ -230,7 +218,8 @@ class XMLBuilder
      */
     protected function buildXML(DOMNode &$DOMNode, $data, $ignoreObjects = false)
     {
-        $data = $this->getNormalizer()->ensureArray($data);
+        $normalizer = $this->getNormalizer();
+        $data = $normalizer->ensureArray($data);
 
         if (is_null($data)) {
             return;
@@ -243,12 +232,12 @@ class XMLBuilder
 
             if (!is_scalar($value)) {
 
-                if (!$value = $this->getNormalizer()->ensureArray($value, $ignoreObjects)) {
+                if (!$value = $normalizer->ensureArray($value, $ignoreObjects)) {
                     continue;
                 }
             }
 
-            if ($this->mapAttributes($DOMNode, $this->normalize($key), $value)) {
+            if ($this->mapAttributes($DOMNode, $normalizer->normalize($key), $value)) {
                 $hasAttributes = true;
                 continue;
             }
@@ -259,7 +248,7 @@ class XMLBuilder
                 if (ctype_digit(implode('', $keys))) {
 
                     foreach ($value as $arrayValue) {
-                        $this->appendDOMNode($DOMNode, $this->singularize($this->normalize($key)), $arrayValue);
+                        $this->appendDOMNode($DOMNode, $this->singularize($normalizer->normalize($key)), $arrayValue);
                     }
                     continue;
                 }
@@ -268,7 +257,7 @@ class XMLBuilder
             }
 
             if ($this->isValidNodeName($key)) {
-                $this->appendDOMNode($DOMNode, $this->normalize($key), $value, $hasAttributes);
+                $this->appendDOMNode($DOMNode, $normalizer->normalize($key), $value, $hasAttributes);
             }
         }
     }
