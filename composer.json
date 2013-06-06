@@ -12,8 +12,12 @@
     "require": {
         "php":">=5.3.7"
     },
+    "require-dev": {
+        "mockery/mockery":"dev-master"
+    },
     "autoload": {
         "psr-0": {"Thapp": "src/"},
+        "classmap":["tests/"],
         "files": ["src/Thapp/Xmlbuilder/helper.php"]
     }
 }

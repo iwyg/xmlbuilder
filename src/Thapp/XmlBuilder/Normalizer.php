@@ -118,13 +118,13 @@ class Normalizer implements NormalizerInterface
     /**
      * isArrayAble
      *
-     * @param ReflectionClass $reflection
+     * @param  mixed $reflection a reflection object
      * @access protected
      * @return boolean
      */
-    protected function isArrayable(ReflectionClass $reflection)
+    protected function isArrayable($reflection)
     {
-        return false !== $reflection->hasMethod('toArray') and $reflection->getMethod('toArray')->isPublic();
+        return $reflection->hasMethod('toArray') and $reflection->getMethod('toArray')->isPublic();
     }
 
     /**
@@ -138,8 +138,10 @@ class Normalizer implements NormalizerInterface
     {
         $reflection  = new ReflectionObject($data);
 
+
         if ($this->isArrayAble($reflection)) {
-            return $data->toArray();
+            $data = $data->toArray();
+            return $this->ensureArray($data);
         }
 
         $methods       = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
