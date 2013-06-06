@@ -26,6 +26,10 @@ $data = array(
 
 $xmlBuilder = new XmlBuilder('data');
 $xmlBuilder->load($data);
+
+// createXML accepts a boolean value weather to return a string or a DOMDocument
+// Set it to `false` if you want to retreive a DOMDocument instead.
+
 echo $xmlBuilder->createXML(true); 
 
 ```
@@ -65,6 +69,8 @@ XmlBuilder's Normalizer Object is aware of the getter methods of an object
 $object = new DataObject('data');
 
 $xmlBuilder->load($object);
+
+
 echo $xmlBuilder->createXML(true);
 
 
@@ -118,6 +124,28 @@ prints:
   </entries>
 </data>
 ```
+
+### Map keys to become attributes
+
+```php
+
+$data = array('foo' => 'bar', 'bar' => 'baz');
+
+$XmlBuilder->load($data);
+
+
+$XmlBuilder->setAttributeMapp(array('data' => array('foo')));
+echo $XmlBuilder->createXML();
+```
+
+Prints: 
+
+```xml
+<data foo="bar">
+  <bar>baz</bar>
+</data>
+```
+
 
 
 
