@@ -1,0 +1,15 @@
+{
+    "name": "thapp/xmlbuilder",
+    "description": "Xmlbuilder utilitity",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Thomas Appel",
+            "email": "mail@thomas-appel.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+
+    }
+}
