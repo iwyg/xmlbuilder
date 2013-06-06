@@ -20,7 +20,7 @@ $data = array(
   );
 );
 
-$xmlBuilder = new XmlBuilder('data');
+$xmlBuilder = new XmlBuilder('data', new Normalizer);
 $xmlBuilder->load($data);
 echo $xmlBuilder->createXML(true); 
 
