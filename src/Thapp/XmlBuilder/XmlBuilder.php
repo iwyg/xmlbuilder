@@ -55,6 +55,13 @@ class XMLBuilder
     protected $data;
 
     /**
+     * rootName
+     *
+     * @var string
+     */
+    protected $rootName;
+
+    /**
      * attributemap
      *
      * @var array
@@ -86,18 +93,6 @@ class XMLBuilder
     {
         $this->setRootname($name);
         $this->setNormalizer($normalizer);
-    }
-
-    /**
-     * setName
-     *
-     * @param mixed $name
-     * @access public
-     * @return void
-     */
-    public function setName($name = null)
-    {
-        $this->rootNa = is_null($name) ? 'data' : $name;
     }
 
     /**
