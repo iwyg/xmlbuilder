@@ -11,9 +11,13 @@
 
 namespace Thapp\XmlBuilder;
 
-use \Closure;
-use \DOMNode;
-use \DOMDocument;
+use Closure;
+use DOMNode;
+use Thapp\XmlBuilder\XmlLoader;
+use Thapp\XmlBuilder\LoaderInterface;
+use Thapp\XmlBuilder\Dom\DOMElement;
+use Thapp\XmlBuilder\Dom\DOMDocument;
+use Thapp\XmlBuilder\Dom\SimpleXMLElement;
 
 /**
  * Class: XMLBuilder
@@ -34,6 +38,13 @@ class XMLBuilder
     protected $singulars = false;
 
     /**
+     * plurals
+     *
+     * @var bools
+     */
+    protected $plurals = false;
+
+    /**
      * singularizer
      *
      * @var Closure
@@ -48,6 +59,13 @@ class XMLBuilder
     protected $normalizer;
 
     /**
+     * loader
+     *
+     * @var mixed
+     */
+    protected $loader;
+
+    /**
      * data
      *
      * @var array
@@ -60,6 +78,13 @@ class XMLBuilder
      * @var string
      */
     protected $rootName;
+
+    /**
+     * checkPrefixes
+     *
+     * @var bool
+     */
+    protected $checkPrefixes = false;
 
     /**
      * attributemap
@@ -89,10 +114,11 @@ class XMLBuilder
      *
      * @access public
      */
-    public function __construct($name = null, NormalizerInterface $normalizer = null)
+    public function __construct($name = null, NormalizerInterface $normalizer = null, LoaderInterface $loader = null)
     {
         $this->setRootname($name);
         $this->setNormalizer($normalizer);
+        $this->setLoader($loader);
     }
 
     /**
@@ -111,6 +137,21 @@ class XMLBuilder
         $this->normalizer = $normalizer;
     }
 
+    /**
+     * setLoader
+     *
+     * @param LoaderInterface $loader
+     * @access public
+     * @return void
+     */
+    public function setLoader(LoaderInterface $loader = null)
+    {
+        if (is_null($loader)) {
+            $loader = new XmlLoader;
+        }
+
+        $this->loader = $loader;
+    }
     /**
      * setEncoding
      *
@@ -203,6 +244,20 @@ class XMLBuilder
         $this->singularizer = $singularizer;
     }
 
+   /**
+     * setPluralizer
+     *
+     * @param mixed $
+     * @param mixed $pluralizer
+     * @access public
+     * @return void
+     */
+    public function setPluralizer(Closure $pluralizer)
+    {
+        $this->plurals = true;
+        $this->pluralizer = $pluralizer;
+    }
+
     /**
      * buildXML
      *
@@ -220,7 +275,7 @@ class XMLBuilder
             return;
         }
 
-        $isIndexedArray = ctype_digit(implode('', array_keys($data)));
+        $isIndexedArray = array_is_numeric($data);
         $hasAttributes = false;
 
         foreach ($data as $key => $value) {
@@ -238,13 +293,14 @@ class XMLBuilder
             }
 
             if (is_array($value) && !is_int($key)) {
-                $keys = array_keys($value);
+                //$keys = array_keys($value);
                 // is numeric array
-                if (ctype_digit(implode('', $keys))) {
+                if (array_is_numeric($value)) {
 
                     foreach ($value as $arrayValue) {
                         $this->appendDOMNode($DOMNode, $this->singularize($normalizer->normalize($key)), $arrayValue);
                     }
+
                     continue;
                 }
             } elseif (is_int($key) || !$this->isValidNodeName($key)) {
@@ -274,6 +330,23 @@ class XMLBuilder
     }
 
     /**
+     * pluralize
+     *
+     * @param mixed $value
+     * @access protected
+     * @return mixed
+     */
+    protected function pluralize($value)
+    {
+        if (!$this->plurals) {
+            return $value;
+        }
+        $fn = $this->pluralizer;
+        return $fn($value);
+
+    }
+
+    /**
      * mapAttributes
      *
      * @access protected
@@ -285,10 +358,10 @@ class XMLBuilder
 
             if (is_array($value)) {
                 foreach ($value as $attrKey => $attrValue) {
-                    $DOMNode->setAttribute($attrKey, $attrValue);
+                    $DOMNode->setAttribute($attrKey, $this->getValue($attrValue));
                 }
             } else {
-                $DOMNode->setAttribute($attrName, (string)$value);
+                $DOMNode->setAttribute($attrName, $this->getValue($value));
             }
             return true;
         }
@@ -345,7 +418,7 @@ class XMLBuilder
         switch (true) {
             case $value instanceof \SimpleXMLElement:
                 $node = dom_import_simplexml($value);
-                $this->dom->importNode($node);
+                $this->dom->importNode($node, true);
                 $DOMNode->appendChild($node);
                 break;
             case $value instanceof \DOMNode:
@@ -369,6 +442,20 @@ class XMLBuilder
             default:
                 return $value;
         }
+    }
+
+    protected function getValue($value)
+    {
+        switch (true) {
+        case is_bool($value):
+            return $value ? 'true' : 'false';
+        case is_numeric($value):
+            return ctype_digit($value) ? intval($value) : floatval($value);
+        case in_array($value, array('true', 'false', 'yes', 'no')):
+            return ('false' === $value || 'no' === $value) ? false : true;
+        default:
+            return clear_value(trim($value));
+        };
     }
 
     /**
@@ -451,5 +538,277 @@ class XMLBuilder
         $DOMNode->appendChild($text);
         $DOMNode->appendChild($attr);
         return true;
+    }
+
+    public function loadXml($xml, $sourceIsString = false, $simpleXml = false)
+    {
+        $loader = $this->loader->create();
+        $loader->setOption('from_string', $sourceIsString);
+        $loader->setOption('simplexml', $simpleXml);
+
+        return $loader->load($xml);
+    }
+
+
+    public function toArray(DOMDocument $dom, $checkPrefixes = false)
+    {
+        $this->checkPrefixes = $checkPrefixes;
+
+        $dom->normalizeDocument();
+
+        $xmlObj = simplexml_import_dom($dom, '\Thapp\XmlBuilder\Dom\SimpleXMLElement');
+
+        $namespaces = $xmlObj->getNamespaces();
+
+        $root = key($namespaces) !== '' ? $this->prefixKey(key($namespaces), $xmlObj->getName()) : $xmlObj->getName();
+        $data = $this->parseXML($xmlObj, $namespaces);
+        return array($root => $data);
+    }
+    /**
+     * parseXML
+     *
+     * @param SimpleXMLElement $xml
+     * @access protected
+     * @return array
+     */
+    protected function parseXML(SimpleXMLElement $xml, $nestedValues = true)
+    {
+        $childpool  = $xml->xpath('child::*');
+        $attributes = $xml->xpath('./@*');
+        $parentName = $xml->getName();
+
+
+        if (!empty($attributes)) {
+            $attrs = [];
+            foreach ($attributes as $key => $attribute) {
+                $namespaces = $attribute->getnameSpaces();
+                $value = $this->getValue((string)$attribute);
+                if ($prefix = $this->nsPrefix($namespaces)) {
+                    $attName = $this->prefixKey($prefix, $attribute->getName());
+                } else {
+                    $attName  = $attribute->getName();
+                }
+                $attrs[$attName] = $value;
+            }
+            $attributes = ['@attributes' => $attrs];
+        }
+
+        $text = $this->prepareTextValue($xml, current($attributes));
+        $result = $this->childNodesToArray($childpool, $parentName);
+
+        if (!empty($attributes)) {
+            if (!is_null($text)) {
+                $result[$this->getTypeKey($text)] = $text;
+            }
+            $result = array_merge($attributes, $result);
+            return $result;
+
+        } else if (!is_null($text)) {
+            if (!empty($result)) {
+                $result[$this->getTypeKey($text)] = $text;
+            } else {
+                $result = $text;
+            }
+            return $result;
+        }
+        return (empty($result) && is_null($text)) ? null : $result;
+    }
+
+    /**
+     * childNodesToArray
+     *
+     * @param array $children array containing SimpleXMLElements, most likely
+     *  derived from an xpath query
+     * @param string $parentName local-name of the parent node
+     * @access public
+     * @return array
+     */
+    public function childNodesToArray($children, $parentName = null, $nestedValues = false)
+    {
+        $result = [];
+        foreach ($children as $child) {
+
+            if (!$this->isSimpleXMLElement($child)) {
+                throw new InvalidArgumentException(sprintf('The input array must only contain SimpleXMLElements but contains %s', gettype($child)));
+            }
+
+            $localNamespaces = $child->getNamespaces();
+            $prefix = key($localNamespaces);
+            $prefix = strlen($prefix) ? $prefix : null;
+            $nsURL = current($localNamespaces);
+
+            $name = $child->getName();
+            $oname = $name;
+            $name = is_null($prefix) ? $name : $this->prefixKey($prefix, $name);
+
+            if (count($children) < 2) {
+                $result[$name] = $this->parseXML($child, $nestedValues);
+                break;
+            }
+
+            if (isset($result[$name])) {
+                if (is_array($result[$name]) && array_is_numeric($result[$name])) {
+                    $value = $this->parseXML($child, $nsURL, $prefix);
+                    if (is_array($value) && array_is_numeric($value)) {
+                        $result[$name] = array_merge($result[$name], $value);
+                    } else {
+                        $result[$name][] = $value;
+                    }
+                } else {
+                    continue;
+                }
+            } else {
+
+                $equals = $this->getEqualNodes($child, $prefix);
+
+                if (count($equals) > 1) {
+                    if ($this->isEqualOrPluralOf($parentName, $oname)) {
+                        $result[] = $this->parseXML($child, $nestedValues);
+                    } else {
+                        $plural = $this->pluralize($oname);
+                        $plural = is_null($prefix) ? $plural : $this->prefixKey($prefix, $plural);
+                        if (isset($result[$plural]) && is_array($result[$plural])) {
+                            $result[$plural][] = $this->parseXML($child, $nestedValues);
+                        } elseif (count($children) !== count($equals)) {
+                            $result[$plural][] = $this->parseXML($child, $nestedValues);
+                        } else {
+                            $result[$name][] = $this->parseXML($child, $nestedValues);
+                        }
+                    }
+                } else {
+                    $result[$name] = $this->parseXML($child, $nsURL, $nestedValues);
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * isSimpleXMLElement
+     *
+     * @param mixed $element
+     * @access public
+     * @return mixed
+     */
+    protected function isSimpleXMLElement($element)
+    {
+        return $element instanceof \SimpleXMLElement;
+    }
+/**
+     * isEqualOrPluralOf
+     *
+     * @param mixed $name
+     * @param mixed $singular
+     * @access protected
+     * @return boolean
+     */
+    protected function isEqualOrPluralOf($name, $singular)
+    {
+        return $name === $singular || $name === $this->pluralize($singular);
+    }
+
+    /**
+     * getEqualNodes
+     *
+     * @param SimpleXMLElement $node
+     * @param mixed $prefix
+     * @access protected
+     * @return array
+     */
+    protected function getEqualNodes(SimpleXMLElement $node, $prefix = null)
+    {
+        $name = is_null($prefix) ? $node->getName() : sprintf("%s:%s", $prefix, $node->getName());
+        return $node->xpath(
+            sprintf(".|following-sibling::*[name() = '%s']|preceding-sibling::*[name() = '%s']", $name, $name)
+        );
+    }
+    /**
+     * getEqualFollowingNodes
+     *
+     * @param SimpleXMLElement $node
+     * @param mixed $prefix
+     * @access protected
+     * @return array
+     */
+    protected function getEqualFollowingNodes(SimpleXMLElement $node, $prefix = null)
+    {
+        $name = is_null($prefix) ? $node->getName() : sprintf("%s:%s", $prefix, $node->getName());
+        return $node->xpath(
+            sprintf(".|following-sibling::*[name() = '%s']", $name)
+        );
+    }
+
+    /**
+     * simpleXMLParentElement
+     *
+     * @param SimpleXMLElement $element
+     * @param int $maxDepth
+     * @access protected
+     * @return boolean|SimpleXMLElement
+     */
+    protected function simpleXMLParentElement(SimpleXMLElement $element, $maxDepth = 4)
+    {
+        if (!$parent = current($element->xpath('parent::*'))) {
+            $xpath = '';
+            while ($maxDepth--) {
+                $xpath .= '../';
+                $query = sprintf('%sparent::*', $xpath);
+
+                if ($parent = current($element->xpath($query))) {
+                    return $parent;
+                }
+
+            }
+        }
+        return $parent;
+    }
+
+    /**
+     * prefixKey
+     *
+     * @param mixed $prefix
+     * @param mixed $localName
+     * @access protected
+     * @return mixed
+     */
+    protected function prefixKey($prefix, $localName)
+    {
+        if (!$this->checkPrefixes) {
+            return $localName;
+        }
+        return sprintf('%s%s%s', $prefix, $this->prefixSeparator, $localName);
+    }
+
+    /**
+     * nsPrefix
+     *
+     * @param array $namespaces
+     * @access protected
+     * @return mixed
+     */
+    protected function nsPrefix(array $namespaces)
+    {
+        $prefix = key($namespaces);
+        return strlen($prefix) ? $prefix : null;
+    }
+    /**
+     * convert boolish and numeric values
+     *
+     * @param mixed $text
+     * @param array $attributes
+     */
+    protected function prepareTextValue(SimpleXMLElement $xml, $attributes = null)
+    {
+        return (isset($attributes['type']) && 'text' === $attributes['type']) ? clear_value((string)$xml) : $this->getValue((string)$xml);
+    }
+
+    /**
+     * determine the array key name for textnodes with attributes
+     *
+     * @param mixed|string $value
+     */
+    protected function getTypeKey($value)
+    {
+        return is_string($value) ? 'text' : 'value';
     }
 }

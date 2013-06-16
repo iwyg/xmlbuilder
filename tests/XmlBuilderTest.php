@@ -154,6 +154,20 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    public function testConvertBooleanValues()
+    {
+        $data = array('foo' => array('@attributes' => array('value' => true)));
+        $this->builder->load($data);
+
+        $expected = '<data><foo value="true"></foo></data>';
+        var_dump($this->builder->createXML($data));
+
+        $this->assertXmlStringEqualsXmlString($expected, $this->builder->createXML($data));
+    }
+
+    /**
+     * @test
+     */
     public function testBuildXMLCreateArrayAndSingularizeNodeNames()
     {
         $str  = '<data><entry>a</entry><entry>b</entry><entry>c</entry></data>';
@@ -166,5 +180,71 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
 
         $xml  = $this->builder->createXML(true);
         $this->assertXmlStringEqualsXmlString($str, $xml);
+    }
+
+
+    public function testXmlToArray()
+    {
+        $xml  = '<data><foo></foo></data>';
+        $dom  = $this->builder->loadXml($xml, true, false);
+        $data = $this->builder->toArray($dom);
+
+        $this->assertTrue(array_key_exists('data', $data));
+        $this->assertTrue(array_key_exists('foo', $data['data']));
+        $this->assertNull($data['data']['foo']);
+    }
+
+    public function testXmlToArrayAttributValues()
+    {
+
+        $xml = '<data><foo value="true" int="1" float="0.1"/></data>';
+        $dom   = $this->builder->loadXml($xml, true, false);
+        $array = $this->builder->toArray($dom);
+
+        $this->assertTrue(isset($array['data']['foo']['@attributes']['value']));
+        $this->assertTrue($array['data']['foo']['@attributes']['value']);
+        $this->assertSame(1, $array['data']['foo']['@attributes']['int']);
+        $this->assertSame(0.1, $array['data']['foo']['@attributes']['float']);
+    }
+
+    public function testXmlToArrayArrayStructures()
+    {
+        $xml = '<foos><foo>1</foo><foo>2</foo><foo>3</foo></foos>';
+        $dom = $this->builder->loadXml($xml, true, false);
+
+        $expected = array(
+            'foos' => array(
+                'foo' => array(1, 2, 3)
+            )
+        );
+
+        $this->assertSame($expected, $this->builder->toArray($dom));
+    }
+
+    public function testXmlToArrayArrayStructuresWithSingularizedNames()
+    {
+
+        $this->builder->setPluralizer(function($name) {
+            if ('foo' === $name) {
+                return 'foos';
+            }
+            return $name;
+        });
+
+        $this->builder->setSingularizer(function($name) {
+            if ('foos' === $name) {
+                return 'foo';
+            }
+            return $name;
+        });
+
+        $xml = '<foos><foo>1</foo><foo>2</foo><foo>3</foo></foos>';
+        $dom = $this->builder->loadXml($xml, true, false);
+
+        $expected = array(
+            'foos' => array(1, 2, 3)
+        );
+
+        $this->assertSame($expected, $this->builder->toArray($dom));
     }
 }
