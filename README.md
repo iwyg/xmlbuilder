@@ -152,4 +152,91 @@ prints:
 ```
 
 
+## Loading xml strings and files
 
+XmlBuilder let you load xml strings or files quite easily. The `loadXML` method
+accepts 3 arguments: 
+
+ - (string)xml: the xml source. can be a xml string or filename
+ - (bool)sourceIsString: the xml source is a xml string or a file 
+ - (bool)simpleXml: return an instance of
+   `\Thapp\XmlBuilder\Dom\SimpleXMLElement`instead of
+   `\Thapp\XmlBuilder\Dom\DOMDocument` 
+
+```php
+<?php
+// ...
+$xml = $xmlBuilder->loadXML('myxmlfile.xml', false);
+// or
+$xml = $xmlBuilder->loadXML('<data><foo></foo></data>', true);
+```
+
+## To array conversion
+
+```php
+<?php
+// ...
+
+$xml   = $xmlBuilder->loadXML('<data><foo>bar</foo></data>', true);
+$array = $xmlBuilder->toArray($xml); // array('data' => array('foo' => 'bar')); 
+
+```
+
+results:
+
+```php
+<?php
+
+array(
+'data' => array(
+	'foo' => 'bar'
+	)
+); 
+
+```
+
+The array conversion is alos aware of singulars and plurals. Just like the
+`setSingularizer` method you can call `setPluralizer`
+
+```php
+<?php
+
+$xmlBuilder->setPluralizer(function ($name) {
+	if ('entry' === $name) {
+		return 'entries';
+	}
+}); 
+
+```
+Given a xml structure like
+
+```xml
+<data>
+	<entries>
+		<entry>foo</entry>
+		<entry>bar</entry>
+	</entries>
+</data>
+```
+
+the resulting array, without pluralizer set would look like this
+
+```
+<?php
+array(
+	'data' => array('entries' => array(
+		'entry' => array('foo', 'bar')
+	))
+);
+```
+
+with pluralizer
+
+```
+<?php
+array(
+	'data' => array(
+		'entries' => array('foo', 'bar')
+	)
+);
+```
