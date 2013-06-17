@@ -66,12 +66,12 @@ class DOMDocumentTest extends \PHPUnit_Framework_TestCase
         $result = $doc->xPath('//*/@id');
 
         $this->assertInstanceOf('DOMNodeList', $result);
-        $this->assertCount(2, $result);
+        $this->assertSame(2, $result->length);
 
         $result = $doc->firstChild->xPath('//foo');
 
         $this->assertInstanceOf('DOMNodeList', $result);
-        $this->assertCount(1, $result);
+        $this->assertSame(1, $result->length);
     }
 
 }
