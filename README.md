@@ -115,6 +115,9 @@ prints:
 ### Singularize child names
 
 ```php
+<?php
+
+//...
 
 $xmlBuilder->setSingularizer(function ($name) {
 
@@ -187,6 +190,8 @@ results:
 ```php
 <?php
 
+//...
+
 array(
 'data' => array(
 	'foo' => 'bar'
@@ -200,6 +205,8 @@ The array conversion is alos aware of singulars and plurals. Just like the
 
 ```php
 <?php
+
+//...
 
 $xmlBuilder->setPluralizer(function ($name) {
 	if ('entry' === $name) {
@@ -221,8 +228,9 @@ Given a xml structure like
 
 the resulting array, without pluralizer set would look like this
 
-```
+```php
 <?php
+// ...
 array(
 	'data' => array('entries' => array(
 		'entry' => array('foo', 'bar')
@@ -232,8 +240,9 @@ array(
 
 with pluralizer
 
-```
+```php
 <?php
+// ...
 array(
 	'data' => array(
 		'entries' => array('foo', 'bar')
