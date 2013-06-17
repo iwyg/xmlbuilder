@@ -579,7 +579,7 @@ class XMLBuilder
 
 
         if (!empty($attributes)) {
-            $attrs = [];
+            $attrs = array();
             foreach ($attributes as $key => $attribute) {
                 $namespaces = $attribute->getnameSpaces();
                 $value = $this->getValue((string)$attribute);
@@ -590,7 +590,7 @@ class XMLBuilder
                 }
                 $attrs[$attName] = $value;
             }
-            $attributes = ['@attributes' => $attrs];
+            $attributes = array('@attributes' => $attrs);
         }
 
         $text = $this->prepareTextValue($xml, current($attributes));
@@ -625,7 +625,7 @@ class XMLBuilder
      */
     public function childNodesToArray($children, $parentName = null, $nestedValues = false)
     {
-        $result = [];
+        $result = array();
         foreach ($children as $child) {
 
             if (!$this->isSimpleXMLElement($child)) {

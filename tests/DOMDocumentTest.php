@@ -57,6 +57,9 @@ class DOMDocumentTest extends \PHPUnit_Framework_TestCase
 
     public function testXpath()
     {
+        if (!extension_loaded('xsl')) {
+            $this->markTestSkipped();
+        }
         $doc = new DOMDocument;
         $doc->loadXML('<data><foo id="1"><baz id="2" value="foo"></baz></foo></data>');
 

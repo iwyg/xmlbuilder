@@ -30,7 +30,7 @@ class SimpleXMLElement extends \SimpleXMLElement
      *
      * @var array
      */
-    public static $boolish = ['yes', 'no', 'true', 'false'];
+    public static $boolish = array('yes', 'no', 'true', 'false');
 
     /**
      * argumentsAsArray
@@ -40,7 +40,7 @@ class SimpleXMLElement extends \SimpleXMLElement
      */
     public function attributesAsArray($namespace = null)
     {
-        $attributes = [];
+        $attributes = array();
         $attr = $this->xpath('./@*');
 
         foreach ($attr as $key => $value) {

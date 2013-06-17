@@ -160,7 +160,6 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
         $this->builder->load($data);
 
         $expected = '<data><foo value="true"></foo></data>';
-        var_dump($this->builder->createXML($data));
 
         $this->assertXmlStringEqualsXmlString($expected, $this->builder->createXML($data));
     }
