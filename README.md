@@ -1,9 +1,27 @@
 xml builder utility
 ==========
 
+Build xml structures from arrays or objects, convert xml structures to array
+data structures. 
+
 [![Build Status](https://travis-ci.org/iwyg/xmlbuilder.png?branch=master)](https://travis-ci.org/iwyg/xmlbuilder)
 
 
+
+## Installation
+
+Using composer
+
+Add `thapp\xmlbuilder` to your composer.json file.  
+
+```js
+"require": {
+	"php":">=5.3.7"
+	"thapp/xmlbuilder": "v0.1.*"
+}
+```
+
+Run `composer update` or `composer install` (if this is a clean composer project)
 
 ## Usage
 
