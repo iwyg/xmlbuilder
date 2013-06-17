@@ -28,7 +28,7 @@ class DOMElement extends BaseDOMElement
      */
     public function xPath($query)
     {
-        return $this->ownerDocument->getXpath($query, $this);
+        return $this->ownerDocument->getXpath()->query($query, $this);
     }
 
     /**
@@ -38,7 +38,7 @@ class DOMElement extends BaseDOMElement
      * @access public
      * @return mixed
      */
-    public function appendDomElement(DOMElement $import, $deep = true)
+    public function appendDomElement(\DOMElement $import, $deep = true)
     {
         return $this->ownerDocument->appendDomElement($import, $this, $deep);
     }

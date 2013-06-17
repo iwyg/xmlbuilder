@@ -201,10 +201,12 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
         $dom   = $this->builder->loadXml($xml, true, false);
         $array = $this->builder->toArray($dom);
 
-        $this->assertTrue(isset($array['data']['foo']['@attributes']['value']));
-        $this->assertTrue($array['data']['foo']['@attributes']['value']);
-        $this->assertSame(1, $array['data']['foo']['@attributes']['int']);
-        $this->assertSame(0.1, $array['data']['foo']['@attributes']['float']);
+        $this->assertArrayHasKey('value', $array['data']['foo']['@attributes']);
+        $this->assertInternalType('bool', $array['data']['foo']['@attributes']['value']);
+        $this->assertArrayHasKey('int', $array['data']['foo']['@attributes']);
+        $this->assertInternalType('integer', $array['data']['foo']['@attributes']['int']);
+        $this->assertArrayHasKey('float', $array['data']['foo']['@attributes']);
+        $this->assertInternalType('float', $array['data']['foo']['@attributes']['float']);
     }
 
     public function testXmlToArrayArrayStructures()
@@ -223,7 +225,6 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
 
     public function testXmlToArrayArrayStructuresWithSingularizedNames()
     {
-
         $this->builder->setPluralizer(function($name) {
             if ('foo' === $name) {
                 return 'foos';
@@ -244,6 +245,7 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
         $expected = array(
             'foos' => array(1, 2, 3)
         );
+
 
         $this->assertSame($expected, $this->builder->toArray($dom));
     }

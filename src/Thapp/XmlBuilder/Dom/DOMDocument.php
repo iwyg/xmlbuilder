@@ -62,7 +62,7 @@ class DOMDocument extends BaseDom
      * @access public
      * @return mixed
      */
-    public function appendDomElement(DOMElement $import, DOMElement $element = null, $deep = true)
+    public function appendDomElement(\DOMElement $import, \DOMElement $element = null, $deep = true)
     {
         $import = $this->importNode($import, $deep);
 

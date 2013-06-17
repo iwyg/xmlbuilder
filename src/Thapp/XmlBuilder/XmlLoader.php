@@ -75,6 +75,13 @@ class XmlLoader implements LoaderInterface
         return is_null($option) ? $this->options : $this->options[$option];
     }
 
+    /**
+     * load
+     *
+     * @param mixed $file
+     * @access public
+     * @return DOMDocument or SimpleXMLElement
+     */
     public function load($file)
     {
         $xml = $this->doLoad($file);
