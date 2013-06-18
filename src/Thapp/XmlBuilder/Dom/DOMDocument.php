@@ -43,6 +43,19 @@ class DOMDocument extends BaseDom
     }
 
     /**
+     * __clone
+     *
+     * @access public
+     * @return void
+     */
+    public function __clone()
+    {
+        if ($this->xpath) {
+            $this->xpath = new DOMXpath($this);
+        }
+    }
+
+    /**
      * xPath
      *
      * @param mixed $query
