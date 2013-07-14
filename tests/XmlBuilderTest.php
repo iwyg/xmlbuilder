@@ -169,7 +169,7 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
      */
     public function testBuildXMLCreateArrayAndSingularizeNodeNames()
     {
-        $str  = '<data><entry>a</entry><entry>b</entry><entry>c</entry></data>';
+        $str  = '<data><entries><entry>a</entry><entry>b</entry><entry>c</entry></entries></data>';
         $data = array('entries' => array('a', 'b', 'c'));
         $this->builder->load($data);
 

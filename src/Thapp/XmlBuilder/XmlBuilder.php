@@ -296,9 +296,16 @@ class XMLBuilder
                 //$keys = array_keys($value);
                 // is numeric array
                 if (array_is_numeric($value)) {
-
-                    foreach ($value as $arrayValue) {
-                        $this->appendDOMNode($DOMNode, $this->singularize($normalizer->normalize($key)), $arrayValue);
+                    if ($skey = $this->singularize($key) and ($key !== $skey)) {
+                        $parentNode = $this->dom->createElement($key);
+                        foreach ($value as $arrayValue) {
+                            $this->appendDOMNode($parentNode, $skey, $arrayValue);
+                        }
+                        $DOMNode->appendChild($parentNode);;
+                    } else {
+                        foreach ($value as $arrayValue) {
+                            $this->appendDOMNode($DOMNode, $this->singularize($normalizer->normalize($key)), $arrayValue);
+                        }
                     }
 
                     continue;
