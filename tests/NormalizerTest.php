@@ -101,6 +101,18 @@ class NormalizerTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    public function testConvertIgnoreClasses()
+    {
+        $this->normalizer->addIgnoredObject(__NAMESPACE__.'\NestedPropertyStub');
+        $data = array('foo' => array('bar' => new NestedPropertyStub));
+        $normalized = $this->normalizer->ensureArray($data);
+
+        $this->assertEquals(array('foo' => array()), $normalized);
+    }
+
+    /**
+     * @test
+     */
     public function testConvertArrayableObjectToArray()
     {
         $data = array('foo' => 'foo', 'bar' => 'bar');

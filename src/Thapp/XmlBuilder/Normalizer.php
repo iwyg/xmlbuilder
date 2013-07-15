@@ -41,6 +41,13 @@ class Normalizer implements NormalizerInterface
     protected $ignoredAttributes = array();
 
     /**
+     * ignoredObjects
+     *
+     * @var array
+     */
+    protected $ignoredObjects = array();
+
+    /**
      * normalized
      *
      * @var array
@@ -151,6 +158,10 @@ class Normalizer implements NormalizerInterface
      */
     protected function convertObject($data)
     {
+        if ($this->isIgnoredObject($data)) {
+            return;
+        }
+
         if ($this->isTraversable($data)) {
             return $this->ensureArray($data);
         }
@@ -352,4 +363,47 @@ class Normalizer implements NormalizerInterface
         }
         $this->ignoredAttributes[] = $attributes;
     }
+
+    /**
+     * setIgnoredAttributes
+     *
+     * @param mixed $attributes
+     * @access public
+     * @return mixed
+     */
+    public function setIgnoredObjects($classes)
+    {
+        if (is_array($classes)) {
+            foreach ($classes as $classname) {
+                $this->addIgnoredObject($classname);
+            }
+            return;
+        }
+        return $this->addIgnoredObject($classes);
+    }
+
+    /**
+     * addIgnoredObject
+     *
+     * @param mixed $classname
+     * @access public
+     * @return mixed
+     */
+    public function addIgnoredObject($classname)
+    {
+        $this->ignoredObjects[] = strtolower($classname);
+    }
+
+    /**
+     * isIgnoredObject
+     *
+     * @param mixed $oject
+     * @access protected
+     * @return mixed
+     */
+    protected function isIgnoredObject($object)
+    {
+        return in_array(strtolower(get_class($object)), $this->ignoredObjects);
+    }
+
 }
