@@ -186,7 +186,7 @@ class Normalizer implements NormalizerInterface
                         }
                     }
 
-                    $out[$attributeName] = $attributeValue;
+                    $out[$nkey] = $attributeValue;
                 }
             }
 
@@ -225,7 +225,7 @@ class Normalizer implements NormalizerInterface
             $value = $this->isAllUpperCase($value) ?
                 strtolower(trim($value, '_-#$%')) :
                 snake_case(trim($value, '_-#$%'));
-            $this->normalized[$ovalue] = strtolower(preg_replace('/[^a-zA-Z\-]+/', '-', $value));
+            $this->normalized[$ovalue] = strtolower(preg_replace('/[^a-zA-Z0-9(^@)]+/', '-', $value));
         }
 
         return $this->normalized[$ovalue];

@@ -178,6 +178,7 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
         });
 
         $xml  = $this->builder->createXML(true);
+
         $this->assertXmlStringEqualsXmlString($str, $xml);
     }
 
