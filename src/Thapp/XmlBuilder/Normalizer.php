@@ -52,7 +52,7 @@ class Normalizer implements NormalizerInterface
         $out = null;
 
         switch (true) {
-            case is_array($data):
+            case $this->isTraversable($data):
                 $out = $this->recursiveConvertArray($data);
                 break;
             case is_object($data):
@@ -72,7 +72,7 @@ class Normalizer implements NormalizerInterface
      * @access protected
      * @return array
      */
-    protected function recursiveConvertArray(array $data)
+    protected function recursiveConvertArray($data)
     {
         $out = array();
 
@@ -203,7 +203,7 @@ class Normalizer implements NormalizerInterface
      */
     public function normalize($value)
     {
-        return strtolower(str_replace(array('_', ':', '#', '+'), '-', snake_case(trim($value, '_-#$%'))));
+        return strtolower(str_replace(array('_', ':', '#', '+', '.'), '-', snake_case(trim($value, '_-#$%'))));
     }
 
     /**
