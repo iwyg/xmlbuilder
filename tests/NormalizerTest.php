@@ -50,7 +50,7 @@ class NormalizerTest extends \PHPUnit_Framework_TestCase
             array('foo-bar', 'fooBar'),
             array('foo-bar', 'foo_bar'),
             array('foo-bar', 'foo:bar'),
-            array('foo.bar', 'foo.bar'),
+            array('foo-bar', 'foo.bar'),
             array('foo', '_foo'),
             array('foo', '%foo')
         );
