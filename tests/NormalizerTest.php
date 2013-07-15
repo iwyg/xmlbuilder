@@ -79,6 +79,28 @@ class NormalizerTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    public function testConvertObjectToArrayExtened()
+    {
+        $data = array('foo' => new SinglePropertyStub);
+        $normalized = $this->normalizer->ensureArray($data);
+
+        $this->assertEquals(array('foo' => array('baz' => 'bazvalue')), $normalized);
+    }
+
+    /**
+     * @test
+     */
+    public function testConvertNestedObjectProperties()
+    {
+        $data = array('foo' => new NestedPropertyStub);
+        $normalized = $this->normalizer->ensureArray($data);
+
+        $this->assertEquals(array('foo' => array('baz' => array('foo' => 'foo', 'bar' => 'bar'))), $normalized);
+    }
+
+    /**
+     * @test
+     */
     public function testConvertArrayableObjectToArray()
     {
         $data = array('foo' => 'foo', 'bar' => 'bar');
@@ -114,5 +136,19 @@ class NormalizerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(array('bar' => 'bar'), $this->normalizer->ensureArray($data));
         $this->assertEquals(array('bar' => 'bar'), $this->normalizer->ensureArray($object));
+    }
+}
+
+class SinglePropertyStub
+{
+    public $baz = 'bazvalue';
+}
+
+class NestedPropertyStub
+{
+    public $baz;
+    public function __construct()
+    {
+        $this->baz = new Stubs\ConvertToArrayStub;
     }
 }

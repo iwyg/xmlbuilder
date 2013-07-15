@@ -56,19 +56,14 @@ class Normalizer implements NormalizerInterface
      */
     public function ensureArray($data)
     {
-        $out = null;
-
         switch (true) {
-            case $this->isTraversable($data):
-                $out = $this->recursiveConvertArray($data);
-                break;
-            case is_object($data):
-                $out = $this->convertObject($data);
-                break;
-            default:
-                break;
+        case $this->isTraversable($data):
+            return $this->recursiveConvertArray($data);
+        case is_object($data):
+            return $this->convertObject($data);
+        default:
+            return;
         }
-        return $out;
     }
 
     /**
@@ -94,7 +89,6 @@ class Normalizer implements NormalizerInterface
             if (is_scalar($value)) {
                 $attrValue = $value;
             } else {
-
                 $attrValue = $this->ensureArray($value);
             }
 
@@ -131,9 +125,21 @@ class Normalizer implements NormalizerInterface
      * @access protected
      * @return boolean
      */
-    protected function isArrayable($reflection)
+    protected function isArrayable($data)
     {
-        return $reflection->hasMethod('toArray') and $reflection->getMethod('toArray')->isPublic();
+        return $data->hasMethod('toArray') and $data->getMethod('toArray')->isPublic();
+    }
+
+    /**
+     * isTraversable
+     *
+     * @param mixed $data
+     * @access protected
+     * @return boolean
+     */
+    protected function isTraversable($data)
+    {
+        return is_array($data) || $data instanceof \Traversable;
     }
 
     /**
@@ -149,65 +155,128 @@ class Normalizer implements NormalizerInterface
             return $this->ensureArray($data);
         }
 
-        $reflection  = new ReflectionObject($data);
+        $reflection = new ReflectionObject($data);
 
         if ($this->isArrayAble($reflection)) {
             $data = $data->toArray();
             return $this->ensureArray($data);
         }
 
-
-        $methods       = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
-        $properties    = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
+        if ($this->isCircularReference($data)) {
+            return;
+        }
 
         $out = array();
+
+        $methods    = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
+        $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
+
+        $this->getObjectGetterValues($methods, $data, $out);
+
+        $this->getObjectProperties($properties, $data, $out);
+        return $out;
+    }
+
+    /**
+     * getObjectGetterValues
+     *
+     * @param mixed $methods
+     * @param array $out
+     * @access protected
+     * @return mixed
+     */
+    protected function getObjectGetterValues($methods, $object,  array &$out = array())
+    {
+        foreach ($methods as $method) {
+            $this->getObjectGetterValue($method, $object, $out);
+        }
+    }
+    /**
+     * getObjectGetterValue
+     *
+     * @param ReflectionMethod $method
+     * @param array $out
+     * @access protected
+     * @return array
+     */
+    protected function getObjectGetterValue(ReflectionMethod $method, $object, array &$out = array())
+    {
+        if (!$this->isGetMethod($method)) {
+            return;
+        }
+
+        $attributeName  = substr($method->name, 3);
+        $attributeValue = $method->invoke($object);
+
+        $nkey = $this->normalize($attributeName);
+
+        if (is_callable($attributeValue) || in_array($nkey, $this->ignoredAttributes)) {
+            continue;
+        }
+
+        if (null !== $attributeValue && !is_scalar($attributeValue)) {
+            $attributeValue = $this->ensureArray($attributeValue);
+        }
+
+        $out[$nkey] = $attributeValue;
+    }
+
+    /**
+     * convertObjectProperties
+     *
+     * @param array $properties
+     * @param array $out
+     * @access protected
+     * @return mixed
+     */
+    protected function getObjectProperties(array $properties, $data, array &$out = array())
+    {
+        foreach ($properties as $property) {
+            $prop =  $property->getName();
+            if (in_array($name = $this->normalize($prop), $this->ignoredAttributes)) {
+               continue;
+            }
+            $out[$prop] = $this->getObjectPropertyValue($property, $prop, $data);
+        }
+    }
+
+    /**
+     * getPropertyValue
+     *
+     * @param \ReflectionProperty $property
+     * @param mixed $prop
+     * @access protected
+     * @return mixed
+     */
+    protected function getObjectPropertyValue(\ReflectionProperty $property, $prop, $data)
+    {
+        $prop =  $property->getName();
+
+        try {
+            $value = $data->{$prop};
+        } catch (\Exception $e) {
+        }
+
+        if (!is_scalar($value)) {
+            $value = $this->ensureArray($value);
+        }
+
+        return $value;
+    }
+
+    /**
+     * isCircularReference
+     *
+     * @access protected
+     * @return mixed
+     */
+    protected function isCircularReference($data)
+    {
         $hash = spl_object_hash($data);
         $circularReference = in_array($hash, $this->objectcache);
         $this->objectcache[] = $hash;
 
-        if (!$circularReference) {
-            foreach ($methods as $method) {
-
-                if ($this->isGetMethod($method)) {
-
-                    $attributeName  = substr($method->name, 3);
-                    $attributeValue = $method->invoke($data);
-
-                    $nkey = $this->normalize($attributeName);
-                    if (is_callable($attributeValue) || in_array($nkey, $this->ignoredAttributes)) {
-                        continue;
-                    }
-
-                    if (null !== $attributeValue && !is_scalar($attributeValue)) {
-                        if (is_object($attributeValue)) {
-                            $attributeValue = $this->convertObject($attributeValue);
-                        } else {
-                            $attributeValue = $this->recursiveConvertArray($attributeValue);
-                        }
-                    }
-
-                    $out[$nkey] = $attributeValue;
-                }
-            }
-
-            foreach ($properties as $property) {
-                $prop =  $property->getName();
-                $name =  $this->normalize($prop);
-
-                if (in_array($name, $this->ignoredAttributes)) {
-                    continue;
-                }
-
-                try {
-                    $value = $data->{$prop};
-                    $out[$prop] = $value;
-                } catch (\Exception $e) {}
-            }
-        } else {
-            return;
-        }
-
-        return $out;
+        return $circularReference;
     }
 
     /**
@@ -222,13 +291,26 @@ class Normalizer implements NormalizerInterface
         $ovalue = $value;
 
         if (!isset($this->normalized[$value])) {
-            $value = $this->isAllUpperCase($value) ?
-                strtolower(trim($value, '_-#$%')) :
-                snake_case(trim($value, '_-#$%'));
-            $this->normalized[$ovalue] = strtolower(preg_replace('/[^a-zA-Z0-9(^@)]+/', '-', $value));
+            $this->normalized[$ovalue] = $this->normalizeString($value);;
         }
 
         return $this->normalized[$ovalue];
+    }
+
+    /**
+     * normalizeString
+     *
+     * @param mixed $string
+     * @access protected
+     * @return mixed
+     */
+    protected function normalizeString($string)
+    {
+        $value = $this->isAllUpperCase($string) ?
+            strtolower(trim($string, '_-#$%')) :
+            snake_case(trim($string, '_-#$%'));
+
+        return strtolower(preg_replace('/[^a-zA-Z0-9(^@)]+/', '-', $value));
     }
 
     /**
@@ -242,18 +324,6 @@ class Normalizer implements NormalizerInterface
     {
         $str = preg_replace('/[^a-zA-Z0-9]/', null, $str);
         return ctype_upper($str);
-    }
-
-    /**
-     * isTraversable
-     *
-     * @param mixed $data
-     * @access protected
-     * @return boolean
-     */
-    protected function isTraversable($data)
-    {
-        return is_array($data) || $data instanceof \Traversable;
     }
 
     /**
