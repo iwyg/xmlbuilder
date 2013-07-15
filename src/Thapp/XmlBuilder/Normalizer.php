@@ -41,6 +41,13 @@ class Normalizer implements NormalizerInterface
     protected $ignoredAttributes = array();
 
     /**
+     * normalized
+     *
+     * @var array
+     */
+    protected $normalized = array();
+
+    /**
      * ensureArray
      *
      * @param mixed $data
@@ -77,20 +84,22 @@ class Normalizer implements NormalizerInterface
         $out = array();
 
         foreach ($data as $key => $value) {
-            $key = $this->normalize($key);
 
-            if (in_array($key, $this->ignoredAttributes)) {
+            $nkey = $this->normalize($key);
+
+            if (in_array($nkey, $this->ignoredAttributes)) {
                 continue;
             }
 
             if (is_scalar($value)) {
                 $attrValue = $value;
             } else {
+
                 $attrValue = $this->ensureArray($value);
             }
 
             if (!is_null($attrValue)) {
-                $out[$this->normalize($key)] = $attrValue;
+                $out[$nkey] = $attrValue;
             }
 
         }
@@ -136,13 +145,17 @@ class Normalizer implements NormalizerInterface
      */
     protected function convertObject($data)
     {
-        $reflection  = new ReflectionObject($data);
+        if ($this->isTraversable($data)) {
+            return $this->ensureArray($data);
+        }
 
+        $reflection  = new ReflectionObject($data);
 
         if ($this->isArrayAble($reflection)) {
             $data = $data->toArray();
             return $this->ensureArray($data);
         }
+
 
         $methods       = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
         $properties    = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
@@ -157,10 +170,11 @@ class Normalizer implements NormalizerInterface
 
                 if ($this->isGetMethod($method)) {
 
-                    $attributeName  = $this->normalize(substr($method->name, 3));
+                    $attributeName  = substr($method->name, 3);
                     $attributeValue = $method->invoke($data);
 
-                    if (is_callable($attributeValue) || in_array($attributeName, $this->ignoredAttributes)) {
+                    $nkey = $this->normalize($attributeName);
+                    if (is_callable($attributeValue) || in_array($nkey, $this->ignoredAttributes)) {
                         continue;
                     }
 
@@ -178,13 +192,15 @@ class Normalizer implements NormalizerInterface
 
             foreach ($properties as $property) {
                 $prop =  $property->getName();
-                $name = $this->normalize($prop);
+                $name =  $this->normalize($prop);
 
                 if (in_array($name, $this->ignoredAttributes)) {
                     continue;
                 }
 
-                try { $out[$name] = $data->{$prop};
+                try {
+                    $value = $data->{$prop};
+                    $out[$prop] = $value;
                 } catch (\Exception $e) {}
             }
         } else {
@@ -203,7 +219,29 @@ class Normalizer implements NormalizerInterface
      */
     public function normalize($value)
     {
-        return strtolower(str_replace(array('_', ':', '#', '+', '.'), '-', snake_case(trim($value, '_-#$%'))));
+        $ovalue = $value;
+
+        if (!isset($this->normalized[$value])) {
+            $value = $this->isAllUpperCase($value) ?
+                strtolower(trim($value, '_-#$%')) :
+                snake_case(trim($value, '_-#$%'));
+            $this->normalized[$ovalue] = strtolower(preg_replace('/[^a-zA-Z\-]+/', '-', $value));
+        }
+
+        return $this->normalized[$ovalue];
+    }
+
+    /**
+     * isAllUpperCase
+     *
+     * @param mixed $str
+     * @access private
+     * @return mixed
+     */
+    private function isAllUpperCase($str)
+    {
+        $str = preg_replace('/[^a-zA-Z0-9]/', null, $str);
+        return ctype_upper($str);
     }
 
     /**
