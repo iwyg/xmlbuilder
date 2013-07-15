@@ -69,20 +69,20 @@ however `@attributes` expects an array of key value pairs wereas a key like `@ke
 
 ```php
 
-$data = array('foo' => 'bar', 'bar' => 'baz');
+$data = array('id' => 12, 'bar' => 'baz');
 
 $xmlBuilder = new XmlBuilder('response');
 $XmlBuilder->load($data);
 
 
-$XmlBuilder->setAttributeMapp(array('response' => array('foo')));
+$XmlBuilder->setAttributeMapp(array('response' => array('id')));
 echo $XmlBuilder->createXML();
 ```
 
 Prints: 
 
 ```xml
-<response foo="bar">
+<response id="12">
   <bar>baz</bar>
 </response>
 ```
