@@ -249,4 +249,42 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
 
         $this->assertSame($expected, $this->builder->toArray($dom));
     }
+
+    /**
+     *
+     */
+    public function testCreateXMLAppendDomNestedDomNodes()
+    {
+        $dom = new \DOMDocument;
+        $foo = $dom->createElement('foo', 'bar');
+        $dom->appendChild($foo);
+
+        $data = array('first' => 'bla', 'second' => $dom);
+        $expected = '<data><first>bla</first><second><foo>bar</foo></second></data>';
+
+
+        $this->builder->load($data);
+        $xml = $this->builder->createXML(true);
+
+        $this->assertXmlStringEqualsXmlString($expected, $xml);
+    }
+
+    /**
+     * @test
+     */
+    public function testCreateXMLAppendDomNode()
+    {
+        $dom = new \DOMDocument;
+        $foo = $dom->createElement('foo', 'bar');
+        $dom->appendChild($foo);
+        $expected = '<data><foo>bar</foo></data>';
+
+        $this->builder->load($dom);
+        $xml = $this->builder->createXML(true);
+        $this->assertXmlStringEqualsXmlString($expected, $xml);
+
+        $this->builder->load($foo);
+        $xml = $this->builder->createXML(true);
+        $this->assertXmlStringEqualsXmlString($expected, $xml);
+    }
 }

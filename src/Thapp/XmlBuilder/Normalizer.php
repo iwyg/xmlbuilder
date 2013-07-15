@@ -144,7 +144,7 @@ class Normalizer implements NormalizerInterface
      * @access protected
      * @return boolean
      */
-    protected function isTraversable($data)
+    public function isTraversable($data)
     {
         return is_array($data) || $data instanceof \Traversable;
     }
@@ -175,6 +175,10 @@ class Normalizer implements NormalizerInterface
 
         if ($this->isCircularReference($data)) {
             return;
+        }
+
+        if ($data instanceof \DOMDocument or $data instanceof \DOMNode) {
+            return $data;
         }
 
         $out = array();
@@ -403,7 +407,8 @@ class Normalizer implements NormalizerInterface
      */
     protected function isIgnoredObject($object)
     {
-        return in_array(strtolower(get_class($object)), $this->ignoredObjects);
+        return in_array(strtolower($class =
+            ($parent = get_parent_class($object)) ? $parent : get_class($object)),
+        $this->ignoredObjects);
     }
-
 }

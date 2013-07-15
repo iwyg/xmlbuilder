@@ -101,6 +101,13 @@ class XMLBuilder
     protected $dom;
 
     /**
+     * indexKey
+     *
+     * @var string
+     */
+    protected $indexKey = 'item';
+
+    /**
      * encoding
      *
      * @var string
@@ -189,6 +196,18 @@ class XMLBuilder
     }
 
     /**
+     * setIndexKey
+     *
+     * @param string $key
+     * @access public
+     * @return void
+     */
+    public function setIndexKey($key)
+    {
+        return $this->indexKey = $key;
+    }
+
+    /**
      * load
      *
      * @param mixed $data
@@ -266,15 +285,33 @@ class XMLBuilder
      * @access protected
      * @return void
      */
-    protected function buildXML(DOMNode &$DOMNode, $data, $ignoreObjects = false)
+    protected function buildXML(DOMNode &$DOMNode, $data)
     {
         $normalizer = $this->getNormalizer();
-        $data = $normalizer->ensureArray($data);
 
         if (is_null($data)) {
             return;
         }
 
+        if ($normalizer->isTraversable($data)) {
+            $this->buildXmlFromTraversable($DOMNode, $data, $normalizer);
+        } else {
+            $this->setElementValue($DOMNode, $data);
+        }
+    }
+
+    /**
+     * buildXmlFromTraversable
+     *
+     * @param DOMNode $DOMNode
+     * @param mixed $data
+     * @param NormalizerInterface $normalizer
+     * @param mixed $ignoreObjects
+     * @access protected
+     * @return void
+     */
+    protected function buildXmlFromTraversable(DOMNode $DOMNode, $data, NormalizerInterface $normalizer)
+    {
         $isIndexedArray = array_is_numeric($data);
         $hasAttributes = false;
 
@@ -282,7 +319,7 @@ class XMLBuilder
 
             if (!is_scalar($value)) {
 
-                if (!$value = $normalizer->ensureArray($value, $ignoreObjects)) {
+                if (!$value = $normalizer->ensureArray($value)) {
                     continue;
                 }
             }
@@ -293,8 +330,7 @@ class XMLBuilder
             }
 
             if (is_array($value) && !is_int($key)) {
-                //$keys = array_keys($value);
-                // is numeric array
+
                 if (array_is_numeric($value)) {
                     if ($skey = $this->singularize($key) and ($key !== $skey)) {
                         $parentNode = $this->dom->createElement($key);
@@ -307,11 +343,19 @@ class XMLBuilder
                             $this->appendDOMNode($DOMNode, $this->singularize($normalizer->normalize($key)), $arrayValue);
                         }
                     }
-
                     continue;
                 }
-            } elseif (is_int($key) || !$this->isValidNodeName($key)) {
-                $key = 'item';
+            } elseif (!is_scalar($value)) {
+                // if this is a non scalar value at this time, just set the
+                // value on the element
+                $node = $this->dom->createElement($normalizer->normalize($key));
+                $DOMNode->appendChild($node);
+                $this->setElementValue($node, $value);
+            }
+
+            // set the default index key if there's no other way:
+            if (is_int($key) || !$this->isValidNodeName($key)) {
+                $key = $this->indexKey;
             }
 
             if ($this->isValidNodeName($key)) {
@@ -428,8 +472,11 @@ class XMLBuilder
                 $this->dom->importNode($node, true);
                 $DOMNode->appendChild($node);
                 break;
+            case $value instanceof \DOMDocument:
+                $DOMNode->appendDomElement($value->firstChild);
+                break;
             case $value instanceof \DOMNode:
-                $DOMNode->appendChild($value);
+                $this->dom->appendDomElement($value, $DOMNode);
                 break;
             case is_array($value) || $value instanceof \Traversable:
                 $this->buildXML($DOMNode, $value);
