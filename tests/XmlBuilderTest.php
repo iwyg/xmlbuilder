@@ -161,7 +161,43 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
 
         $expected = '<data><foo value="true"></foo></data>';
 
-        $this->assertXmlStringEqualsXmlString($expected, $this->builder->createXML($data));
+        $this->assertXmlStringEqualsXmlString($expected, $this->builder->createXML(true));
+    }
+
+    /**
+     * @test
+     */
+    public function testIndexedArraySetItemKey()
+    {
+        $data = array(array(1, 2, 3));
+        $this->builder->load($data);
+        $this->builder->setIndexKey('int');
+
+        $expected = '<data><int>1</int><int>2</int><int>3</int></data>';
+
+        $xml = $this->builder->createXML(true);
+
+        $this->assertXmlStringEqualsXmlString($expected, $xml);
+
+        $data = array('#%s' => array(1, 2, 3));
+
+        $this->builder->load($data);
+        $xml = $this->builder->createXML(true);
+
+        $this->assertXmlStringEqualsXmlString($expected, $xml);
+    }
+
+    /**
+     * @test
+     */
+    public function testHandleNoneConvertibleObject()
+    {
+        $data = array('object' => new \StdClass);
+        $this->builder->load($data);
+        $xml = $this->builder->createXML(true);
+
+        $expected = '<data></data>';
+        $this->assertXmlStringEqualsXmlString($expected, $xml);
     }
 
     /**
@@ -251,6 +287,36 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @test
+     */
+    public function testCreateXMLBooleanValues()
+    {
+        $data = array('foo' => true);
+        $expected = '<data><foo>yes</foo></data>';
+        $this->builder->load($data);
+        $xml = $this->builder->createXML(true);
+        $this->assertXmlStringEqualsXmlString($expected, $xml);
+
+        $data = array('foo' => false);
+        $expected = '<data><foo>no</foo></data>';
+        $this->builder->load($data);
+        $xml = $this->builder->createXML(true);
+        $this->assertXmlStringEqualsXmlString($expected, $xml);
+    }
+
+    /**
+     * @test
+     */
+    public function testCreateXMLNumericTypedNodes()
+    {
+        $data = array('foo' => '1');
+        $expected = '<data><foo type="string">1</foo></data>';
+        $this->builder->load($data);
+        $xml = $this->builder->createXML(true);
+        $this->assertXmlStringEqualsXmlString($expected, $xml);
+    }
+
+    /**
      *
      */
     public function testCreateXMLAppendDomNestedDomNodes()
@@ -285,6 +351,30 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
 
         $this->builder->load($foo);
         $xml = $this->builder->createXML(true);
+        $this->assertXmlStringEqualsXmlString($expected, $xml);
+    }
+
+    /**
+     * @test
+     */
+    public function testCreateXMLAppendSimpleXml()
+    {
+        $simple = simplexml_load_string('<node><item>1</item><item>2</item></node>');
+
+        $data = array('simple' => $simple);
+        $expected = '<data><simple><node><item>1</item><item>2</item></node></simple></data>';
+
+        $this->builder->load($data);
+        $xml = $this->builder->createXML(true);
+
+        $this->assertXmlStringEqualsXmlString($expected, $xml);
+
+        $data = $simple;
+        $expected = '<data><node><item>1</item><item>2</item></node></data>';
+
+        $this->builder->load($data);
+        $xml = $this->builder->createXML(true);
+
         $this->assertXmlStringEqualsXmlString($expected, $xml);
     }
 }

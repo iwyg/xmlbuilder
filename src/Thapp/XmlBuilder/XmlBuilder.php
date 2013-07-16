@@ -293,7 +293,7 @@ class XMLBuilder
             return;
         }
 
-        if ($normalizer->isTraversable($data)) {
+        if ($normalizer->isTraversable($data) and !$normalizer->isXMLElement($data)) {
             $this->buildXmlFromTraversable($DOMNode, $data, $normalizer);
         } else {
             $this->setElementValue($DOMNode, $data);
@@ -319,7 +319,7 @@ class XMLBuilder
 
             if (!is_scalar($value)) {
 
-                if (!$value = $normalizer->ensureArray($value)) {
+                if (!$value = $normalizer->ensureBuildable($value)) {
                     continue;
                 }
             }
@@ -327,6 +327,11 @@ class XMLBuilder
             if ($this->mapAttributes($DOMNode, $normalizer->normalize($key), $value)) {
                 $hasAttributes = true;
                 continue;
+            }
+
+            // set the default index key if there's no other way:
+            if (is_int($key) || !$this->isValidNodeName($key)) {
+                $key = $this->indexKey;
             }
 
             if (is_array($value) && !is_int($key)) {
@@ -345,17 +350,13 @@ class XMLBuilder
                     }
                     continue;
                 }
-            } elseif (!is_scalar($value)) {
+            } elseif ($normalizer->isXMLElement($value)) {
                 // if this is a non scalar value at this time, just set the
                 // value on the element
                 $node = $this->dom->createElement($normalizer->normalize($key));
                 $DOMNode->appendChild($node);
                 $this->setElementValue($node, $value);
-            }
-
-            // set the default index key if there's no other way:
-            if (is_int($key) || !$this->isValidNodeName($key)) {
-                $key = $this->indexKey;
+                continue;
             }
 
             if ($this->isValidNodeName($key)) {
@@ -467,9 +468,10 @@ class XMLBuilder
     protected function setElementValue($DOMNode, $value = null)
     {
         switch (true) {
-            case $value instanceof \SimpleXMLElement:
+
+            case $this->isSimpleXMLElement($value):
                 $node = dom_import_simplexml($value);
-                $this->dom->importNode($node, true);
+                $node = $this->dom->importNode($node, true);
                 $DOMNode->appendChild($node);
                 break;
             case $value instanceof \DOMDocument:

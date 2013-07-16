@@ -59,11 +59,34 @@ class Normalizer implements NormalizerInterface
      *
      * @param mixed $data
      * @access public
+     * @deprecated
      * @return array
      */
     public function ensureArray($data)
     {
         switch (true) {
+        case $this->isTraversable($data):
+            return $this->recursiveConvertArray($data);
+        case is_object($data):
+            return $this->convertObject($data);
+        default:
+            return;
+        }
+    }
+
+    /**
+     * ensureBildable
+     *
+     * @param mixed $data
+     * @access public
+     * @since v0.1.3
+     * @return mixed
+     */
+    public function ensureBuildable($data)
+    {
+        switch (true) {
+        case $this->isXMLElement($data):
+            return $data;
         case $this->isTraversable($data):
             return $this->recursiveConvertArray($data);
         case is_object($data):
@@ -96,7 +119,7 @@ class Normalizer implements NormalizerInterface
             if (is_scalar($value)) {
                 $attrValue = $value;
             } else {
-                $attrValue = $this->ensureArray($value);
+                $attrValue = $this->ensureBuildable($value);
             }
 
             if (!is_null($attrValue)) {
@@ -118,7 +141,7 @@ class Normalizer implements NormalizerInterface
     {
         if (!$this->isTraversable($data)) {
             if (is_object($data)) {
-                $data = $this->ensureArray($data, $ignoreobjects);
+                $data = $this->ensureBuildable($data, $ignoreobjects);
             }
         }
 
@@ -158,28 +181,30 @@ class Normalizer implements NormalizerInterface
      */
     protected function convertObject($data)
     {
+
         if ($this->isIgnoredObject($data)) {
             return;
         }
 
+        if ($this->isXMLElement($data)) {
+            return $data;
+        }
+
         if ($this->isTraversable($data)) {
-            return $this->ensureArray($data);
+            return $this->ensureBuildable($data);
         }
 
         $reflection = new ReflectionObject($data);
 
         if ($this->isArrayAble($reflection)) {
             $data = $data->toArray();
-            return $this->ensureArray($data);
+            return $this->ensureBuildable($data);
         }
 
         if ($this->isCircularReference($data)) {
             return;
         }
 
-        if ($data instanceof \DOMDocument or $data instanceof \DOMNode) {
-            return $data;
-        }
 
         $out = array();
 
@@ -230,7 +255,7 @@ class Normalizer implements NormalizerInterface
         }
 
         if (null !== $attributeValue && !is_scalar($attributeValue)) {
-            $attributeValue = $this->ensureArray($attributeValue);
+            $attributeValue = $this->ensureBuildable($attributeValue);
         }
 
         $out[$nkey] = $attributeValue;
@@ -273,7 +298,7 @@ class Normalizer implements NormalizerInterface
         }
 
         if (!is_scalar($value)) {
-            $value = $this->ensureArray($value);
+            $value = $this->ensureBuildable($value);
         }
 
         return $value;
@@ -396,6 +421,18 @@ class Normalizer implements NormalizerInterface
     public function addIgnoredObject($classname)
     {
         $this->ignoredObjects[] = strtolower($classname);
+    }
+
+    /**
+     * isXMLElement
+     *
+     * @param mixed $data
+     * @access public
+     * @return boolean
+     */
+    public function isXMLElement($data)
+    {
+        return $data instanceof \SimpleXMLElement or $data instanceof \DOMNode;
     }
 
     /**
