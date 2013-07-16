@@ -294,7 +294,7 @@ class XMLBuilder
         }
 
         if ($normalizer->isTraversable($data) and !$normalizer->isXMLElement($data)) {
-            $this->buildXmlFromTraversable($DOMNode, $data, $normalizer);
+            $this->buildXmlFromTraversable($DOMNode, $normalizer->ensureBuildable($data), $normalizer);
         } else {
             $this->setElementValue($DOMNode, $data);
         }

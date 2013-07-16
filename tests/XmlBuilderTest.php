@@ -151,6 +151,19 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
         $this->assertXmlStringEqualsXmlString($expected, $this->builder->createXML($data));
     }
 
+    public function testBuildXmlIgnoreElements()
+    {
+        $this->builder->getNormalizer()->setIgnoredAttributes('env');
+        $data = array('__env' => array('foo'), 'stuff' => array(1, 2, 3));
+
+        $expected = '<data><stuff>1</stuff><stuff>2</stuff><stuff>3</stuff></data>';
+        $this->builder->load($data);
+        $xml = $this->builder->createXML(true);
+        $this->assertXmlStringEqualsXmlString($expected, $xml);
+    }
+
+
+
     /**
      * @test
      */
@@ -179,7 +192,7 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
 
         $this->assertXmlStringEqualsXmlString($expected, $xml);
 
-        $data = array('#%s' => array(1, 2, 3));
+        $data = array('#%!' => array(1, 2, 3));
 
         $this->builder->load($data);
         $xml = $this->builder->createXML(true);
