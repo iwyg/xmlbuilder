@@ -108,6 +108,13 @@ class XMLBuilder
     protected $indexKey = 'item';
 
     /**
+     * nodeValueKey
+     *
+     * @var string
+     */
+    protected $nodeValueKey = 'nodevalue';
+
+    /**
      * encoding
      *
      * @var string
@@ -202,9 +209,34 @@ class XMLBuilder
      * @access public
      * @return void
      */
-    public function setIndexKey($key)
+    public function setIndexKey($key, $normalize = false)
     {
+        if (true !== $normalize and !$this->isValidNodeName($key)) {
+           throw new \InvalidArgumentException(sprintf('%s is an invalid node name', $key));
+        } else {
+           $key = $this->normalizer->normalize($key);
+        }
+
         return $this->indexKey = $key;
+    }
+
+    /**
+     * setNodeValueKey
+     *
+     * @param string $key
+     *
+     * @access public
+     * @return void
+     */
+    public function setNodeValueKey($key, $normalize = false)
+    {
+        if (true !== $normalize and !$this->isValidNodeName($key)) {
+           throw new \InvalidArgumentException(sprintf('%s is an invalid node name', $key));
+        } else {
+           $key = $this->normalizer->normalize($key);
+        }
+
+        return $this->nodeValueKey = $key;
     }
 
     /**
@@ -540,7 +572,7 @@ class XMLBuilder
     {
         $element = $this->dom->createElement($name);
 
-        if ($hasAttributes && ($name === 'text' || $name === 'value')) {
+        if ($hasAttributes && $name === $this->nodeValueKey) {
             $this->setElementValue($DOMNode, $value);
         } else if ($this->setElementValue($element, $value)) {
             $DOMNode->appendChild($element);
@@ -865,6 +897,7 @@ class XMLBuilder
      */
     protected function getTypeKey($value)
     {
-        return is_string($value) ? 'text' : 'value';
+        //return is_string($value) ? 'text' : 'value';
+        return $this->nodeValueKey;
     }
 }

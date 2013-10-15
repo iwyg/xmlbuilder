@@ -410,4 +410,26 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
 
         $this->assertXmlStringEqualsXmlString($expected, $xml);
     }
+
+    /**
+     * @test
+     */
+    public function testNodeValueOnAttributes()
+    {
+        $key = 'nodeval';
+        $this->builder->setNodeValueKey($key);
+
+        $str = '<data><node id="12">some text</node></data>';
+        $dom = $this->builder->loadXML($str, true);
+
+        $array = $this->builder->toArray($dom);
+
+        $this->assertTrue(isset($array['data']['node'][$key]), "$key is set");
+        $this->assertEquals('some text', $array['data']['node'][$key], 'text value equals');
+
+        $this->builder->load($array['data']);
+
+        $this->assertXmlStringEqualsXmlString($str, $this->builder->createXML(true));
+    }
+
 }
