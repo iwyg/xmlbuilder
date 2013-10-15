@@ -267,3 +267,5 @@ array(
 	)
 );
 ```
+
+Documentation will be updated shortly. 
