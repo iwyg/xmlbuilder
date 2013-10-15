@@ -89,6 +89,26 @@ class XmlBuilderTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    public function testTextNodeShouldBeParsedProperly()
+    {
+        $str  = '<data><text>some text</text></data>';
+        $data = array('text' => 'some text');
+
+        $this->builder->load($data);
+        $xml  = $this->builder->createXML(true);
+        $this->assertXmlStringEqualsXmlString($str, $xml);
+
+        $str  = '<data><foo><text>some text</text></foo></data>';
+        $data = array('foo' => array('text' => 'some text'));
+
+        $this->builder->load($data);
+        $xml  = $this->builder->createXML(true);
+        $this->assertXmlStringEqualsXmlString($str, $xml);
+    }
+
+    /**
+     * @test
+     */
     public function testBuildXMLSetAttributes()
     {
         $str  = '<data foo="bar"/>';
