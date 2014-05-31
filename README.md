@@ -1,3 +1,6 @@
+This repository is no longer maintained.  
+Project has moved over [here](https://github.com/seleneapp/xml) 
+
 xml builder utility
 ==========
 
